@@ -283,14 +283,20 @@ void filter_mode_disp(u8 x,u8 y,u8 mode)
 
 extern u8 filter_mode_value;
 
+
 void osd_line3_disp(u8 select)
 {
-	
-	OLED_Clear_line(0,OSD_LINE3_Y_POS,16);
-	OLED_Clear_line(0,OSD_LINE3_Y_POS+1,16);
 
+	static u8 filter_mode_value_pre = 0xff;
 
-	filter_mode_disp(0,OSD_LINE3_Y_POS,filter_mode_value);
+	if(filter_mode_value_pre == 0xff || filter_mode_value != filter_mode_value_pre)
+	{
+		OLED_Clear_line(0,OSD_LINE3_Y_POS,16);
+		OLED_Clear_line(0,OSD_LINE3_Y_POS+1,16);
+
+		filter_mode_disp(0,OSD_LINE3_Y_POS,filter_mode_value);
+		filter_mode_value_pre = filter_mode_value;
+	}
 }
 
 
@@ -312,13 +318,6 @@ void osd_line3_disp_clear_line(void)
 u8 line4_buff[16]={0};
 
 
-
-
-
-const u8 recorder_state_msg[]={
-
-	"Record"};
-
 const u8 ssd_state_msg[]={
 
 	"SSD"};
@@ -330,33 +329,48 @@ extern enum KEY_STATE_TYPE recorder_work_state;
 extern u8 record_state;
 extern u8 ssd_state;
 
+extern enum KEY_STATE_TYPE recorder_work_state;
+u8 *recorder_state_msg[]={
+		{"         "},
+	{"Recording"},
+		{"Pause"},
+		{"Prev"},
+
+	{"Next"},
+		
+	{"Play"},
+};
+
+
+
+enum KEY_STATE_TYPE recorder_work_state_pre = KEY_STATE_INIT;
+
+u8 ssd_state_pre = 0xff;
 void osd_line4_disp(u8 chn)
 {
 
-	static u8 tmp = 1;
+    if(recorder_work_state_pre==KEY_STATE_INIT || recorder_work_state_pre!=recorder_work_state
+        ||ssd_state_pre==0xff||ssd_state_pre!=ssd_state)
+    {
+        OLED_Clear_line(0,6,16);
+        OLED_Clear_line(0,7,16);
 
-	if(tmp)
-		{
-		tmp = 0;
-		
+        memset(line4_buff,0,16);
 
-	OLED_Clear_line(0,6,16);
-	OLED_Clear_line(0,7,16);
+        //if(record_state)
+        	strcpy((char *)line4_buff,(const char*)recorder_state_msg[recorder_work_state]);
+        if(ssd_state)
+        	strcpy((char *)line4_buff+10,(const char*)ssd_state_msg);
 
-	memset(line4_buff,0,16);
 
-	if(record_state)
-		strcpy((char *)line4_buff,(const char*)recorder_state_msg);
-	if(ssd_state)
-		strcpy((char *)line4_buff+10,(const char*)ssd_state_msg);
+        OLED_ShowString(0,6,line4_buff,16);
 
-	
-	OLED_ShowString(0,6,line4_buff,16);
+        recorder_work_state_pre = recorder_work_state;
+        ssd_state_pre = ssd_state;
+    }
 
-	tmp = 1;
-		}
+    
 }
-
 
 
 void osd_line_little_4_disp(u8 chn)
@@ -364,6 +378,8 @@ void osd_line_little_4_disp(u8 chn)
 	OLED_Clear_line(0,6,16);
 	OLED_Clear_line(0,7,16);
 	
+	strcpy(line4_buff,recorder_state_msg[recorder_work_state]);
+	OLED_ShowString(0,6,line4_buff,16);
 
 }
 
